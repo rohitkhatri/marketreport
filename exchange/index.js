@@ -1,5 +1,6 @@
 const { getClosingData: getNSEClosingReport } = require('./nse');
 const { getClosingData: getBSEClosingReport } = require('./bse');
+const { Exchange, Stock } = require('./types');
 
 const exchange = {
     NSE: getNSEClosingReport,
@@ -7,9 +8,11 @@ const exchange = {
 };
 
 /**
- * 
- * @param {'NSE'|'BSE'} exchangeType - Exchange
+ * Get closing report for NSE & BSE
+ * @param {Exchange} exchangeType - Exchange
  * @param {Date} [date] - Date for which the report has to be downloaded
+ * 
+ * @returns {Promise<Stock[]>}
  */
 async function getClosingReport(exchangeType, date) {
     date = date ?? new Date();

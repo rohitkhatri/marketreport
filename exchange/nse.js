@@ -2,6 +2,7 @@ const AdmZip = require('adm-zip');
 const xlsx = require('xlsx');
 const fs = require('fs/promises');
 
+const { Stock, Company } = require('./types');
 const { months, companiesCacheFile } = require('./constants');
 
 /**
@@ -13,7 +14,7 @@ const { months, companiesCacheFile } = require('./constants');
  * Get closing report based on passed date
  * @param {Date} date - Date
  * 
- * @returns {Promise<[StockReport]>}
+ * @returns {Promise<Stock[]>}
  */
 async function getClosingData(date) {
     const companies = await getCompaniesDetails();
@@ -72,7 +73,7 @@ async function getClosingReportURL(date) {
  * @param {object} [options.callback] - Callbacks
  * @param {RowMapCallback} [options.callback.row] - Row map callback
  * 
- * @returns {Promise<Buffer>}
+ * @returns {Promise<Stock[]>}
  */
 async function downloadClosingReport(date, options = {}) {
     const { url: closingReportUrl, filename } = await getClosingReportURL(date);
@@ -109,7 +110,7 @@ async function downloadClosingReport(date, options = {}) {
  * @param {object} options - Options
  * @param {boolean} options.invalidate_cache - Ignore cache and fetch fresh data
  * 
- * @returns {Promise<[object]>}
+ * @returns {Promise<Company[]>}
  */
 async function getCompaniesDetails(options = {}) {
     let companies = null;

@@ -1,17 +1,13 @@
 const xlsx = require('xlsx');
 
+const { Stock, RowCallback } = require('./types');
 const { getCompaniesDetails } = require('./nse');
-
-/**
- * @callback RowMapCallback
- * @param {object} data - Row data object
- */
 
 /**
  * Get closing report based on passed date
  * @param {Date} date - Date
  * 
- * @returns {Promise<[StockReport]>}
+ * @returns {Promise<Stock[]>}
  */
 async function getClosingData(date) {
     const companies = await getCompaniesDetails();
@@ -50,9 +46,9 @@ async function getClosingReportURL(date) {
  * @param {Date} date - Date
  * @param {object} options - Options
  * @param {object} [options.callback] - Callbacks
- * @param {RowMapCallback} [options.callback.row] - Row map callback
+ * @param {RowCallback} [options.callback.row] - Row map callback
  * 
- * @returns {Promise<Buffer>}
+ * @returns {Promise<Stock[]>}
  */
 async function downloadClosingReport(date, options = {}) {
     const { url: closingReportUrl } = await getClosingReportURL(date);
