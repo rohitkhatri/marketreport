@@ -1,0 +1,27 @@
+{
+  "name": "marketreport",
+  "version": "1.0.0",
+  "description": "Download bhavcopy for NSE & BSE",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rohitkhatri/marketreport"
+  },
+  "keywords": [
+    "marketClosingReport",
+    "indianStockDailyReport",
+    "nseDailyReport",
+    "bseDailyReport"
+  ],
+  "author": "Rohit Khatri",
+  "license": "ISC",
+  "homepage": "https://github.com/rohitkhatri/marketreport",
+  "dependencies": {
+    "adm-zip": "^0.5.12",
+    "xlsx": "^0.18.5"
+  }
+}

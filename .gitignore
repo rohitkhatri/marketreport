@@ -1,0 +1,7 @@
+.env
+/node_modules
+.npmrc
+test.js
+_cache/*
+!_cache/.gitkeep
+.DS_Store
