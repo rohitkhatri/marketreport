@@ -1,7 +1,7 @@
 {
   "name": "marketreport",
   "version": "1.0.0",
-  "description": "Download bhavcopy for NSE & BSE",
+  "description": "Download market report for NSE & BSE",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

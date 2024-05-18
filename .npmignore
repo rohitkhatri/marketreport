@@ -1,2 +1,7 @@
 .npmrc
 test.js
+.env
+/node_modules
+_cache/*
+!_cache/.gitkeep
+.DS_Store
