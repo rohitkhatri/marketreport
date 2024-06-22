@@ -13,6 +13,7 @@ const exchange = {
  * @param {Date} [date] - Date for which the report has to be downloaded
  * 
  * @returns {Promise<Stock[]>}
+ * @throws {import('./errors').ReportNotFoundError}
  */
 async function getClosingReport(exchangeType, date) {
     date = date ?? new Date();

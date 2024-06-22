@@ -1,6 +1,7 @@
 const xlsx = require('xlsx');
 
 const { Stock, RowCallback } = require('./types');
+const { ReportNotFoundError } = require('./errors');
 const { getCompaniesDetails } = require('./nse');
 
 /**
@@ -90,7 +91,7 @@ async function downloadFileFromURL(url) {
     const response = await fetch(url);
     
     if (response.status !== 200) {
-        throw new Error(`Cannot find report for the passed date, please verify the date!`);
+        throw new ReportNotFoundError(`Cannot find report for the passed date, please verify the date!`);
     }
 
     const arrayBuffer = await response.arrayBuffer();

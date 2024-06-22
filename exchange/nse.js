@@ -3,6 +3,7 @@ const xlsx = require('xlsx');
 const fs = require('fs/promises');
 
 const { Stock, Company } = require('./types');
+const { ReportNotFoundError } = require('./errors');
 const { months, companiesCacheFile } = require('./constants');
 
 /**
@@ -172,7 +173,7 @@ async function downloadFileFromURL(url) {
     const response = await fetch(url);
     
     if (response.status !== 200) {
-        throw new Error(`Cannot find report for the passed date, please verify the date!`);
+        throw new ReportNotFoundError(`Cannot find report for the passed date, please verify the date!`);
     }
 
     const arrayBuffer = await response.arrayBuffer();
