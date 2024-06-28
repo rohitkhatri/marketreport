@@ -2,7 +2,6 @@ const AdmZip = require('adm-zip');
 const xlsx = require('xlsx');
 const fs = require('fs/promises');
 
-const { Stock, Company } = require('./types');
 const { ReportNotFoundError } = require('./errors');
 const { months, companiesCacheFile } = require('./constants');
 
@@ -15,14 +14,14 @@ const { months, companiesCacheFile } = require('./constants');
  * Get closing report based on passed date
  * @param {Date} date - Date
  * 
- * @returns {Promise<Stock[]>}
+ * @returns {Promise<import('./types').ClosingReport>}
  */
 async function getClosingData(date) {
     const companies = await getCompaniesDetails();
     const report = await downloadClosingReport(date, {
         callback: {
             row: (data) => {
-                data.name =  companies && companies[data.symbol] ? companies[data.symbol].name : (data.name ?? null);
+                data.name = (companies && companies[data.symbol] ? companies[data.symbol].name : (data.name ?? null))?.trim();
             }
         }
     });
@@ -52,7 +51,7 @@ async function getCompaniesDetailReportURL(date) {
  * Generate closing report url
  * @param {Date} date - Date for which the report should be downloaded
  * 
- * @returns {Promise<{url: string, filename: string}>}
+ * @returns {Promise<{url: string, filename: string, type: 'zip'|'csv'}>}
  */
 async function getClosingReportURL(date) {
     const day = date.getDate().toString().padStart('2', '0');
@@ -60,11 +59,34 @@ async function getClosingReportURL(date) {
     const month = (date.getMonth() + 1).toString().padStart('2', '0');
     const formattedDate = `${day}${month}${year}`;
 
-    const filename = `NSE_CM_bhavcopy_${formattedDate}.csv.zip`;
-    return {
-        filename: filename.replace('.zip', ''),
-        url: `https://archives.nseindia.com/content/historical/EQUITIES/${year}/${months[date.getMonth()]}/${filename}`
+    const output = {
+        filename: `BhavCopy_NSE_CM_0_0_0_${year}${month}${day}_F_0000.csv`,
+        url: `https://nsearchives.nseindia.com/content/cm/BhavCopy_NSE_CM_0_0_0_${year}${month}${day}_F_0000.csv.zip`,
+        // url: `https://archives.nseindia.com/content/cm/${year}/${months[date.getMonth()]}/BhavCopy_NSE_CM_0_0_0_${year}${month}${day}_F_0000.csv.zip`,
+        type: 'zip'
     };
+
+    if (date >= new Date('2024-01-01')) {
+        // BhavCopy_NSE_CM_0_0_0_20240101_F_0000.csv.zip
+        return output;
+    } else if (date >= new Date('2023-01-11') && date <= new Date('2023-12-31')) {
+        // NSE_CM_bhavcopy_01012023.csv
+        output.filename = `NSE_CM_bhavcopy_${formattedDate}.csv`;
+        output.url = `https://archives.nseindia.com/content/historical/EQUITIES/${year}/${months[date.getMonth()]}/NSE_CM_bhavcopy_${formattedDate}.csv.zip`;
+        output.type = 'zip';
+    } else if (date >= new Date('2022-10-07') && date <= new Date('2023-01-10')) {
+        // NSE_CM_bhavcopy_06OCT2022.csv
+        output.filename = `NSE_CM_bhavcopy_${day}${months[date.getMonth()]}${year}.csv`;
+        output.url = `https://archives.nseindia.com/content/historical/EQUITIES/${year}/${months[date.getMonth()]}/${output.filename}.zip`;
+        output.type = 'zip';
+    } else if (date >= new Date('2011-06-22') && date <= new Date('2022-10-06')) {
+        // cm22JUN2011bhav.csv
+        output.filename = `cm${day}${months[date.getMonth()]}${year}bhav.csv`;
+        output.url = `https://archives.nseindia.com/content/historical/EQUITIES/${year}/${months[date.getMonth()]}/${output.filename}.zip`;
+        output.type = 'zip';
+    }
+
+    return output;
 }
 
 /**
@@ -74,26 +96,28 @@ async function getClosingReportURL(date) {
  * @param {object} [options.callback] - Callbacks
  * @param {RowMapCallback} [options.callback.row] - Row map callback
  * 
- * @returns {Promise<Stock[]>}
+ * @returns {Promise<import('./types').ClosingReport>}
  */
 async function downloadClosingReport(date, options = {}) {
-    const { url: closingReportUrl, filename } = await getClosingReportURL(date);
-    const closingReportZipBuffer = await downloadFileFromURL(closingReportUrl);
-    const buffer = await extractFileFromZip(closingReportZipBuffer, filename);
+    const { url: closingReportUrl, filename, type: fileType } = await getClosingReportURL(date);
+    const fileBuffer = await downloadFileFromURL(closingReportUrl);
+    const buffer = fileType === 'csv' ? fileBuffer : await extractFileFromZip(fileBuffer, filename);
     const workbook = xlsx.read(buffer);
-    const json = xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]).map(row => {
+    const rows = xlsx.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+    const data = rows.map(row => {
         const mapped = {
             isin: row.ISIN,
-            symbol: row.TckrSymb,
-            open: row.OpnPric,
-            high: row.HghPric,
-            low: row.LwPric,
-            close: row.ClsPric,
-            last: row.LastPric,
-            prev_close: row.PrvsClsgPric,
-            total_trading_volume: row.TtlTradgVol,
-            total_trading_value: row.TtlTrfVal,
-            total_no_of_tx_executed: row.TtlNbOfTxsExctd
+            symbol: row.SYMBOL ?? row.TckrSymb ?? row.SYMBOL,
+            series: row.SctySrs ?? row['SERIES/SCRIP GROUP'] ?? row['SERIES'],
+            open: row.OPEN ?? row.OpnPric ?? row['OPEN PRICE'],
+            high: row.HIGH ?? row.HghPric ?? row['HIGH PRICE'],
+            low: row.LOW ?? row.LwPric ?? row['LOW PRICE'],
+            close: row.CLOSE ?? row.ClsPric ?? row['CLOSING PRICE'],
+            last: row.LAST ?? row.LastPric ?? row['LAST TRADED PRICE'],
+            prev_close: row.PREVCLOSE ?? row.PrvsClsgPric ?? row['PREVIOUS CLOSE PRICE'],
+            total_trading_volume: row.TOTTRDQTY ?? row.TtlTradgVol ?? row['TRADED QUANTITY'],
+            total_trading_value: row.TOTTRDVAL ?? row.TtlTrfVal ?? row['TRADED VALUE'],
+            total_no_of_tx_executed: row.TOTALTRADES ?? row.TtlNbOfTxsExctd ?? row['NUMBER OF TRADES']
         };
 
         if (options.callback && typeof options.callback.row === 'function') {
@@ -103,7 +127,10 @@ async function downloadClosingReport(date, options = {}) {
         return mapped;
     });
 
-    return json;
+    return {
+        data,
+        report_url: closingReportUrl
+    };
 }
 
 /**
@@ -122,7 +149,7 @@ async function getCompaniesDetails(options = {}) {
             const cachedCompanies = await fs.readFile(companiesCacheFile);
             const data = JSON.parse(cachedCompanies.toString());
 
-            if ((new Date(data.meta.cached_at)).getMonth() < new Date().getMonth()) {
+            if ((new Date(data.meta.cached_at)).getDate() < new Date().getDate()) {
                 refetch = true;
             }
 
@@ -173,7 +200,10 @@ async function downloadFileFromURL(url) {
     const response = await fetch(url);
     
     if (response.status !== 200) {
-        throw new ReportNotFoundError(`Cannot find report for the passed date, please verify the date!`);
+        throw new ReportNotFoundError(`Report not found - ${url}`, {
+            exchange: 'NSE',
+            report_url: url
+        });
     }
 
     const arrayBuffer = await response.arrayBuffer();
@@ -199,5 +229,6 @@ async function extractFileFromZip(zipBuffer, filename) {
 
 module.exports = {
     getCompaniesDetails,
+    extractFileFromZip,
     getClosingData
 };

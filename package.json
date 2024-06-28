@@ -1,6 +1,6 @@
 {
   "name": "marketreport",
-  "version": "1.0.5",
+  "version": "1.0.7",
   "description": "Download market report for NSE & BSE",
   "main": "index.js",
   "scripts": {

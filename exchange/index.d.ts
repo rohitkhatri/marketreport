@@ -1,4 +1,4 @@
-import { Exchange, Stock } from "./types";
+import { ClosingReport, Exchange } from "./types";
 import { ReportNotFoundError } from "./errors";
 
 /**
@@ -11,4 +11,4 @@ import { ReportNotFoundError } from "./errors";
 export function getClosingReport(
   exchangeType: Exchange,
   date?: Date
-): Promise<Stock[]>;
+): Promise<ClosingReport>;

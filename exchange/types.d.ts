@@ -3,6 +3,17 @@
  */
 export type Exchange = "NSE" | "BSE";
 
+export interface Company {
+  /**
+   * Company name
+   */
+  name: string;
+  /**
+   * Company market ticker symbol
+   */
+  symbol: string;
+}
+
 export interface Stock {
   /**
    * Company name
@@ -16,6 +27,10 @@ export interface Stock {
    * Company market ticker symbol
    */
   symbol: string;
+  /**
+   * Stock instrument group or series
+   */
+  series: string;
   /**
    * Open price
    */
@@ -54,15 +69,15 @@ export interface Stock {
   total_no_of_tx_executed: number;
 }
 
-export interface Company {
+export interface ClosingReport {
   /**
-   * Company name
+   * Array of stocks
    */
-  name: string;
+  data: Stock[];
   /**
-   * Company market ticker symbol
+   * Stock exchange report url from which the report is downloaded
    */
-  symbol: string;
+  report_url: string;
 }
 
 /**
